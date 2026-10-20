@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Complexity and Memory</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Visual Complexity and Memory</h1>
+  <button id="beginBtn">Start</button>
+  <div id="timer"></div>
+
+  <div id="grid"></div>
+
+  <div id="tools" hidden>
+    <button class="tool selected" data-tool="0" style="background:#2563eb">Blue</button>
+    <button class="tool" data-tool="1" style="background:#f97316">Orange</button>
+    <button class="tool" data-tool="-1" style="background:#64748b">Eraser</button>
+  </div>
+  <button id="submitBtn" hidden>Done</button>
+  <button id="nextBtn" hidden>Next pattern</button>
+  <div id="review"></div>
+  <div id="endBox" hidden>
+    <button id="againBtn">Play again</button>
+    <button id="exitBtn" class="grey">Exit</button>
+  </div>
+
+  <div style="margin-top:30px">
+    <button id="csvBtn">Export CSV</button>
+    <button id="clearBtn">Delete all saved data</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
