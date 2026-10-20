@@ -9,28 +9,56 @@
 <body>
   <h1>Recall Lab</h1>
   <p>How does pattern complexity affect your memory?</p>
-  <button id="beginBtn">Start</button>
-  <div id="timer"></div>
 
-  <div id="grid"></div>
+  <!-- MENU SCREEN -->
+  <section id="menu">
+    <div class="card">
+      <h2>Practice</h2>
+      <p>Unlimited rounds with feedback. Nothing is saved.</p>
+      <select id="practiceLevel">
+        <option>Simple</option><option>Medium</option><option>Complex</option>
+      </select>
+      <button id="practiceBtn">Start practice</button>
+    </div>
 
-  <div id="tools" hidden>
-    <button class="tool selected" data-tool="0" style="background:#2563eb">Blue</button>
-    <button class="tool" data-tool="1" style="background:#f97316">Orange</button>
-    <button class="tool" data-tool="-1" style="background:#64748b">Eraser</button>
-  </div>
-  <button id="submitBtn" hidden>Done</button>
-  <button id="nextBtn" hidden>Next pattern</button>
-  <div id="review"></div>
-  <div id="endBox" hidden>
-    <button id="againBtn">Play again</button>
-    <button id="exitBtn" class="grey">Exit</button>
-  </div>
+    <div class="card">
+      <h2>Game mode</h2>
+      <p>5 rounds. Pick a difficulty and climb the leaderboard.</p>
+      <select id="difficulty">
+        <option>Easy</option><option selected>Normal</option><option>Hard</option>
+      </select>
+      <input id="nickname" maxlength="12" placeholder="Nickname (not your real name)">
+      <button id="gameBtn">Play</button>
+      <div id="board"></div>
+      <button id="clearBoardBtn" class="grey small">Clear leaderboard</button>
+    </div>
 
-  <div style="margin-top:30px">
-    <button id="csvBtn">Export CSV</button>
-    <button id="clearBtn">Delete all saved data</button>
-  </div>
+    <div class="card">
+      <h2>Experiment mode</h2>
+      <p>For the science fair study. No feedback, results saved.</p>
+      <button id="expBtn">Start experiment</button>
+      <div class="row">
+        <button id="csvBtn" class="grey small">Export CSV</button>
+        <button id="clearBtn" class="grey small">Delete experiment data</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLAY SCREEN (used by all three modes) -->
+  <section id="play" hidden>
+    <div id="timer"></div>
+    <div id="grid"></div>
+    <div id="tools" hidden>
+      <button class="tool selected" data-tool="0" style="background:#2563eb">Blue</button>
+      <button class="tool" data-tool="1" style="background:#f97316">Orange</button>
+      <button class="tool" data-tool="-1" style="background:#64748b">Eraser</button>
+    </div>
+    <button id="submitBtn" hidden>Done</button>
+    <button id="nextBtn" hidden>Next</button>
+    <div id="review"></div>
+    <button id="againBtn" hidden>Play again</button>
+    <button id="quitBtn" class="grey">Back to menu</button>
+  </section>
 
   <script src="script.js"></script>
 </body>
