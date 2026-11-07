@@ -3,7 +3,7 @@
 // =====================================================
 let response = Array(36).fill(-1);   // what the participant has built
 let tool = 0;                        // 0 = blue, 1 = orange, -1 = eraser
-let onChange = null, tickId = null, pauseId = null, left = 0, recallStart = 0;
+let onChange = null, tickId = null, pauseId = null, elapsed = 0, recallStart = 0;
 
 const $ = id => document.getElementById(id);
 const grid = $('grid');
@@ -99,7 +99,8 @@ const DIFFICULTY = {                                       // used by game mode 
 };
 const GAME_ROUNDS = 5;
 // Experiment timing. Keep all three viewing times EQUAL so complexity is the only thing that changes.
-const EXP = { viewByLevel: { Simple: 10, Medium: 10, Complex: 10 }, recall: 30, pause: 3 };
+// autoFinish: true = the experiment ends a pattern as soon as it is rebuilt perfectly
+const EXP = { viewByLevel: { Simple: 10, Medium: 10, Complex: 10 }, recall: 30, pause: 3, autoFinish: true };
 // true  = rotate the level order and shuffle patterns for each participant (counterbalancing)
 // false = EVERY participant gets the exact same patterns in the exact same order
 const COUNTERBALANCE = false;
@@ -136,15 +137,15 @@ function recall(o) {
   drawGrid(response, true);
   $('tools').hidden = false;
   $('submitBtn').hidden = false;
-  left = o.recall;
+  elapsed = 0;                                       // counts UP: 0, 1, 2 ... up to the limit
   recallStart = Date.now();                          // start the stopwatch when recall begins
-  $('timer').textContent = 'Rebuild it: ' + left;
+  $('timer').textContent = 'Rebuild it: ' + elapsed + ' / ' + o.recall;
   onChange = () => { if (o.autoFinish && scoreAnswer(o.pattern, response).accuracy === 100) finish(o); };
   $('submitBtn').onclick = () => finish(o);
   tickId = setInterval(() => {
-    left--;
-    $('timer').textContent = 'Rebuild it: ' + left;
-    if (left === 0) finish(o);
+    elapsed++;
+    $('timer').textContent = 'Rebuild it: ' + elapsed + ' / ' + o.recall;
+    if (elapsed >= o.recall) finish(o);
   }, 1000);
 }
 
@@ -155,7 +156,7 @@ function finish(o) {
   $('submitBtn').hidden = true;
   const result = scoreAnswer(o.pattern, response);
   const ms = Math.min(Date.now() - recallStart, o.recall * 1000);   // time taken, in milliseconds
-  o.done(result, ms, left === 0);                                    // left === 0 means time ran out
+  o.done(result, ms, elapsed >= o.recall);                           // true = the counter reached the limit
 
   if (o.feedback) {
     drawReview(o.pattern, response);
@@ -168,7 +169,7 @@ function finish(o) {
     $('nextBtn').onclick = () => { $('nextBtn').hidden = true; o.next(); };
   } else {
     drawGrid(response, false);
-    $('timer').textContent = 'Saved!';
+    $('timer').textContent = (EXP.autoFinish && result.accuracy === 100) ? 'Perfect! Saved!' : 'Saved!';
     pauseId = setTimeout(o.next, EXP.pause * 1000);
   }
 }
@@ -282,7 +283,7 @@ function expRound() {
   const p = trials[idx];
   runRound({
     pattern: p.grid, view: EXP.viewByLevel[p.level], recall: EXP.recall,
-    feedback: false, autoFinish: false,                        // no hints: same experience for all
+    feedback: false, autoFinish: EXP.autoFinish,
     label: 'Pattern ' + (idx + 1) + ' of ' + trials.length,
     done: (r, ms, timedOut) => saveResult(p, r, ms, timedOut),
     next: () => { idx++; expRound(); }
