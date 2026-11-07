@@ -100,6 +100,9 @@ const DIFFICULTY = {                                       // used by game mode 
 const GAME_ROUNDS = 5;
 // Experiment timing. Keep all three viewing times EQUAL so complexity is the only thing that changes.
 const EXP = { viewByLevel: { Simple: 10, Medium: 10, Complex: 10 }, recall: 30, pause: 3 };
+// true  = rotate the level order and shuffle patterns for each participant (counterbalancing)
+// false = EVERY participant gets the exact same patterns in the exact same order
+const COUNTERBALANCE = false;
 const STORE = 'vcm_results';                               // experiment data
 const BOARD = 'vcm_leaderboard';                           // game scores (kept separate!)
 
@@ -261,9 +264,12 @@ function startExperiment() {
   const count = Number(localStorage.getItem('vcm_count') || 0) + 1;
   localStorage.setItem('vcm_count', count);
   participantId = 'P' + String(count).padStart(3, '0');       // anonymous ID
-  order = ORDERS[(count - 1) % 6];                             // rotate the 6 orders
+  order = COUNTERBALANCE ? ORDERS[(count - 1) % 6] : [0, 1, 2];   // fixed: Simple, Medium, Complex
   trials = [];
-  order.forEach(li => shuffle(PATTERNS.filter(p => p.li === li)).forEach(p => trials.push(p)));
+  order.forEach(li => {
+    const set = PATTERNS.filter(p => p.li === li);               // always pattern 1, 2, 3
+    (COUNTERBALANCE ? shuffle(set) : set).forEach(p => trials.push(p));
+  });
   idx = 0;
   expRound();
 }
