@@ -111,8 +111,8 @@ const ADMIN_PIN = '0331';
 const askPin = () => prompt('Researcher PIN:') === ADMIN_PIN || (alert('Wrong PIN.'), false);
 // ---- Online storage: every volunteer's results are sent to ONE Google Sheet ----
 // Paste your Apps Script web app URL below. Leave it '' to save on this device only.
-const SHEET_URL = '';
-const SHEET_KEY = 'change-this-word';        // must match SECRET in your Apps Script
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzAExKqNH9UC88SAuBasZdSt_u3qtu-sSmXeWAMiZ8SIikmQ45QtoibCF9Acxil5tZ0cA/exec';
+const SHEET_KEY = 'm0ntequilla';        // must match SECRET in your Apps Script
 let sendFailed = false;
 function sendRow(row) {
   if (!SHEET_URL) return;
