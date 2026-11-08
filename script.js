@@ -104,7 +104,7 @@ const EXP = { viewByLevel: { Simple: 10, Medium: 10, Complex: 10 }, recall: 30, 
 // feedback: true = show accuracy and the real pattern after every pattern (press Next to continue)
 // true  = rotate the level order and shuffle patterns for each participant (counterbalancing)
 // false = EVERY participant gets the exact same patterns in the exact same order
-const COUNTERBALANCE = false;
+const COUNTERBALANCE = true;
 // Researcher PIN: Export CSV and Delete experiment data ask for it. CHANGE IT to your own number.
 // (This stops volunteers clicking by accident. It is not real security: anyone can read this file.)
 const ADMIN_PIN = '0331';
@@ -112,7 +112,7 @@ const askPin = () => prompt('Researcher PIN:') === ADMIN_PIN || (alert('Wrong PI
 // ---- Online storage: every volunteer's results are sent to ONE Google Sheet ----
 // Paste your Apps Script web app URL below. Leave it '' to save on this device only.
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzAExKqNH9UC88SAuBasZdSt_u3qtu-sSmXeWAMiZ8SIikmQ45QtoibCF9Acxil5tZ0cA/exec';
-const SHEET_KEY = 'm0ntequilla';        // must match SECRET in your Apps Script
+const SHEET_KEY = 'passionfruit';        // must match SECRET in your Apps Script
 let sendFailed = false;
 function sendRow(row) {
   if (!SHEET_URL) return;
@@ -285,7 +285,7 @@ function startExperiment() {
   participantId = SHEET_URL ? uniqueId() : 'P' + String(count).padStart(3, '0');   // anonymous ID
   // optional name; leading = + - @ are removed so Excel never treats a name as a formula
   participantName = $('expName').value.trim().replace(/^[=+\-@\s]+/, '');
-  order = COUNTERBALANCE ? ORDERS[(count - 1) % 6] : [0, 1, 2];   // fixed: Simple, Medium, Complex
+  order = COUNTERBALANCE ? ORDERS[Math.floor(Math.random() * 6)] : [0, 1, 2];   // random level order per participant
   trials = [];
   order.forEach(li => {
     const set = PATTERNS.filter(p => p.li === li);               // always pattern 1, 2, 3
