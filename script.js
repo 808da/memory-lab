@@ -105,6 +105,23 @@ const EXP = { viewByLevel: { Simple: 10, Medium: 10, Complex: 10 }, recall: 30, 
 // true  = rotate the level order and shuffle patterns for each participant (counterbalancing)
 // false = EVERY participant gets the exact same patterns in the exact same order
 const COUNTERBALANCE = false;
+// Researcher PIN: Export CSV and Delete experiment data ask for it. CHANGE IT to your own number.
+// (This stops volunteers clicking by accident. It is not real security: anyone can read this file.)
+const ADMIN_PIN = '0331';
+const askPin = () => prompt('Researcher PIN:') === ADMIN_PIN || (alert('Wrong PIN.'), false);
+// ---- Online storage: every volunteer's results are sent to ONE Google Sheet ----
+// Paste your Apps Script web app URL below. Leave it '' to save on this device only.
+const SHEET_URL = '';
+const SHEET_KEY = 'change-this-word';        // must match SECRET in your Apps Script
+let sendFailed = false;
+function sendRow(row) {
+  if (!SHEET_URL) return;
+  fetch(SHEET_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ key: SHEET_KEY, row }) })
+    .catch(() => { sendFailed = true; });    // only catches network problems
+}
+// A random ID so two different devices never both create "P001"
+const uniqueId = () => 'P' + Array.from({ length: 4 }, () =>
+  'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 31)]).join('');
 const STORE = 'vcm_results';                               // experiment data
 const BOARD = 'vcm_leaderboard';                           // game scores (kept separate!)
 
@@ -265,7 +282,7 @@ function startExperiment() {
   resetPlay(); showScreen('play');
   const count = Number(localStorage.getItem('vcm_count') || 0) + 1;
   localStorage.setItem('vcm_count', count);
-  participantId = 'P' + String(count).padStart(3, '0');       // anonymous ID
+  participantId = SHEET_URL ? uniqueId() : 'P' + String(count).padStart(3, '0');   // anonymous ID
   // optional name; leading = + - @ are removed so Excel never treats a name as a formula
   participantName = $('expName').value.trim().replace(/^[=+\-@\s]+/, '');
   order = COUNTERBALANCE ? ORDERS[(count - 1) % 6] : [0, 1, 2];   // fixed: Simple, Medium, Complex
@@ -288,7 +305,7 @@ function expRound() {
       const r = mine.filter(x => x.complexity === level);
       return level + ': ' + mean(r.map(x => x.accuracy_percent)).toFixed(1) + '% in ' +
         mean(r.map(x => x.recall_time_seconds)).toFixed(1) + ' s on average';
-    }).join('  |  ');
+    }).join('  |  ') + (sendFailed ? '   (Warning: some results could not be sent online. Tell the researcher.)' : '');
     return;
   }
   const p = trials[idx];
@@ -303,7 +320,7 @@ function expRound() {
 }
 function saveResult(p, r, ms, timedOut) {
   const rows = JSON.parse(localStorage.getItem(STORE) || '[]');
-  rows.push({
+  const row = {
     participant_id: participantId, block_order: order.map(i => Object.keys(LEVELS)[i]).join('>'),
     trial_number: idx + 1, complexity: p.level, pattern_id: p.id, num_elements: p.n,
     hits: r.hits, color_errors: r.colorErrors, extra_squares: r.extras,
@@ -314,12 +331,15 @@ function saveResult(p, r, ms, timedOut) {
     date: new Date().toISOString().slice(0, 10),
     participant_name: participantName,                         // optional, added at the end
     timestamp: new Date().toISOString()                        // exact date and time of this trial
-  });
-  localStorage.setItem(STORE, JSON.stringify(rows));
+  };
+  rows.push(row);
+  localStorage.setItem(STORE, JSON.stringify(rows));           // local backup on this device
+  sendRow(row);                                                // and send it to the Google Sheet
 }
 $('expBtn').onclick = startExperiment;
 
 $('csvBtn').onclick = () => {
+  if (!askPin()) return;
   const rows = JSON.parse(localStorage.getItem(STORE) || '[]');
   if (!rows.length) return alert('No experiment data saved yet.');
   const keys = [...new Set(rows.flatMap(r => Object.keys(r)))];   // every column, even if older rows lack some
@@ -330,6 +350,7 @@ $('csvBtn').onclick = () => {
   a.click();
 };
 $('clearBtn').onclick = () => {
+  if (!askPin()) return;
   if (confirm('Delete ALL experiment data on this device? Export the CSV first!')) {
     localStorage.removeItem(STORE); localStorage.removeItem('vcm_count');
   }
