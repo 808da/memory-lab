@@ -100,7 +100,8 @@ const DIFFICULTY = {                                       // used by game mode 
 const GAME_ROUNDS = 5;
 // Experiment timing. Keep all three viewing times EQUAL so complexity is the only thing that changes.
 // autoFinish: true = the experiment ends a pattern as soon as it is rebuilt perfectly
-const EXP = { viewByLevel: { Simple: 10, Medium: 10, Complex: 10 }, recall: 30, pause: 3, autoFinish: true };
+const EXP = { viewByLevel: { Simple: 10, Medium: 10, Complex: 10 }, recall: 30, pause: 3, autoFinish: true, feedback: true };
+// feedback: true = show accuracy and the real pattern after every pattern (press Next to continue)
 // true  = rotate the level order and shuffle patterns for each participant (counterbalancing)
 // false = EVERY participant gets the exact same patterns in the exact same order
 const COUNTERBALANCE = false;
@@ -277,14 +278,23 @@ function startExperiment() {
 function expRound() {
   if (idx >= trials.length) {
     drawGrid(blank(), false);
-    $('timer').textContent = 'All patterns finished! Thank you.';
+    const mine = JSON.parse(localStorage.getItem(STORE) || '[]').filter(r => r.participant_id === participantId);
+    const mean = list => list.reduce((a, b) => a + b, 0) / (list.length || 1);
+    $('timer').textContent = 'All patterns finished! Average accuracy: ' +
+      mean(mine.map(r => r.accuracy_percent)).toFixed(1) + '%';
+    $('review').textContent = Object.keys(LEVELS).map(level => {
+      const r = mine.filter(x => x.complexity === level);
+      return level + ': ' + mean(r.map(x => x.accuracy_percent)).toFixed(1) + '% in ' +
+        mean(r.map(x => x.recall_time_seconds)).toFixed(1) + ' s on average';
+    }).join('  |  ');
     return;
   }
   const p = trials[idx];
   runRound({
     pattern: p.grid, view: EXP.viewByLevel[p.level], recall: EXP.recall,
-    feedback: false, autoFinish: EXP.autoFinish,
+    feedback: EXP.feedback, autoFinish: EXP.autoFinish,
     label: 'Pattern ' + (idx + 1) + ' of ' + trials.length,
+    nextLabel: idx + 1 < trials.length ? 'Next pattern' : 'See final score',
     done: (r, ms, timedOut) => saveResult(p, r, ms, timedOut),
     next: () => { idx++; expRound(); }
   });
