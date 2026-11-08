@@ -259,13 +259,15 @@ $('clearBoardBtn').onclick = () => {
 // =====================================================
 // PART 7: EXPERIMENT MODE (locked rules, saved to CSV)
 // =====================================================
-let participantId = '', order = [], trials = [], idx = 0;
+let participantId = '', participantName = '', order = [], trials = [], idx = 0;
 
 function startExperiment() {
   resetPlay(); showScreen('play');
   const count = Number(localStorage.getItem('vcm_count') || 0) + 1;
   localStorage.setItem('vcm_count', count);
   participantId = 'P' + String(count).padStart(3, '0');       // anonymous ID
+  // optional name; leading = + - @ are removed so Excel never treats a name as a formula
+  participantName = $('expName').value.trim().replace(/^[=+\-@\s]+/, '');
   order = COUNTERBALANCE ? ORDERS[(count - 1) % 6] : [0, 1, 2];   // fixed: Simple, Medium, Complex
   trials = [];
   order.forEach(li => {
@@ -280,7 +282,7 @@ function expRound() {
     drawGrid(blank(), false);
     const mine = JSON.parse(localStorage.getItem(STORE) || '[]').filter(r => r.participant_id === participantId);
     const mean = list => list.reduce((a, b) => a + b, 0) / (list.length || 1);
-    $('timer').textContent = 'All patterns finished! Average accuracy: ' +
+    $('timer').textContent = (participantName ? 'Thanks, ' + participantName + '! ' : '') + 'All patterns finished! Average accuracy: ' +
       mean(mine.map(r => r.accuracy_percent)).toFixed(1) + '%';
     $('review').textContent = Object.keys(LEVELS).map(level => {
       const r = mine.filter(x => x.complexity === level);
@@ -309,7 +311,9 @@ function saveResult(p, r, ms, timedOut) {
     recall_time_seconds: Number((ms / 1000).toFixed(2)),       // how long the rebuild took
     timed_out: timedOut,                                       // true = the 30 seconds ran out
     view_seconds: EXP.viewByLevel[p.level], recall_limit_seconds: EXP.recall,
-    date: new Date().toISOString().slice(0, 10)
+    date: new Date().toISOString().slice(0, 10),
+    participant_name: participantName,                         // optional, added at the end
+    timestamp: new Date().toISOString()                        // exact date and time of this trial
   });
   localStorage.setItem(STORE, JSON.stringify(rows));
 }
@@ -318,7 +322,7 @@ $('expBtn').onclick = startExperiment;
 $('csvBtn').onclick = () => {
   const rows = JSON.parse(localStorage.getItem(STORE) || '[]');
   if (!rows.length) return alert('No experiment data saved yet.');
-  const keys = Object.keys(rows[0]);
+  const keys = [...new Set(rows.flatMap(r => Object.keys(r)))];   // every column, even if older rows lack some
   const lines = [keys.join(','), ...rows.map(r => keys.map(k => JSON.stringify(r[k])).join(','))];
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
