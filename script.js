@@ -104,7 +104,7 @@ const EXP = { viewByLevel: { Simple: 10, Medium: 10, Complex: 10 }, recall: 30, 
 // feedback: true = show accuracy and the real pattern after every pattern (press Next to continue)
 // true  = rotate the level order and shuffle patterns for each participant (counterbalancing)
 // false = EVERY participant gets the exact same patterns in the exact same order
-const COUNTERBALANCE = true;
+const COUNTERBALANCE = false;
 // Researcher PIN: Export CSV and Delete experiment data ask for it. CHANGE IT to your own number.
 // (This stops volunteers clicking by accident. It is not real security: anyone can read this file.)
 const ADMIN_PIN = '0331';
