@@ -100,7 +100,7 @@ const DIFFICULTY = {                                       // used by game mode 
 const GAME_ROUNDS = 5;
 // Experiment timing. Keep all three viewing times EQUAL so complexity is the only thing that changes.
 // autoFinish: true = the experiment ends a pattern as soon as it is rebuilt perfectly
-const EXP = { viewByLevel: { Simple: 10, Medium: 10, Complex: 10 }, recall: 30, pause: 3, autoFinish: true, feedback: true };
+const EXP = { viewByLevel: { Simple: 15, Medium: 15, Complex: 15 }, recall: 30, pause: 3, autoFinish: true, feedback: true };
 // feedback: true = show accuracy and the real pattern after every pattern (press Next to continue)
 // true  = rotate the level order and shuffle patterns for each participant (counterbalancing)
 // false = EVERY participant gets the exact same patterns in the exact same order
@@ -114,10 +114,26 @@ const askPin = () => prompt('Researcher PIN:') === ADMIN_PIN || (alert('Wrong PI
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzAExKqNH9UC88SAuBasZdSt_u3qtu-sSmXeWAMiZ8SIikmQ45QtoibCF9Acxil5tZ0cA/exec';
 const SHEET_KEY = 'passionfruit';        // must match SECRET in your Apps Script
 let sendFailed = false;
+const PENDING = 'vcm_pending';                       // rows that could not be sent yet (resent next time the page opens)
+let sendChain = Promise.resolve();                   // sends happen one at a time, in order
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function deliver(row) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch(SHEET_URL, { method: 'POST', body: JSON.stringify({ key: SHEET_KEY, row }) });
+      if ((await res.text()).trim() === 'ok') return;          // the sheet confirmed it saved the row
+    } catch (e) { /* network problem: try again */ }
+    await wait(1500 * attempt);
+  }
+  sendFailed = true;                                           // all 3 tries failed
+  const q = JSON.parse(localStorage.getItem(PENDING) || '[]');
+  q.push(row);
+  localStorage.setItem(PENDING, JSON.stringify(q));
+}
 function sendRow(row) {
-  if (!SHEET_URL) return;
-  fetch(SHEET_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ key: SHEET_KEY, row }) })
-    .catch(() => { sendFailed = true; });    // only catches network problems
+  if (!SHEET_URL) return sendChain;
+  sendChain = sendChain.then(() => deliver(row));
+  return sendChain;
 }
 // A random ID so two different devices never both create "P001"
 const uniqueId = () => 'P' + Array.from({ length: 4 }, () =>
@@ -282,6 +298,7 @@ function startExperiment() {
   resetPlay(); showScreen('play');
   const count = Number(localStorage.getItem('vcm_count') || 0) + 1;
   localStorage.setItem('vcm_count', count);
+  sendFailed = false;
   participantId = SHEET_URL ? uniqueId() : 'P' + String(count).padStart(3, '0');   // anonymous ID
   // optional name; leading = + - @ are removed so Excel never treats a name as a formula
   participantName = $('expName').value.trim().replace(/^[=+\-@\s]+/, '');
@@ -305,7 +322,17 @@ function expRound() {
       const r = mine.filter(x => x.complexity === level);
       return level + ': ' + mean(r.map(x => x.accuracy_percent)).toFixed(1) + '% in ' +
         mean(r.map(x => x.recall_time_seconds)).toFixed(1) + ' s on average';
-    }).join('  |  ') + (sendFailed ? '   (Warning: some results could not be sent online. Tell the researcher.)' : '');
+    }).join('  |  ');
+    if (SHEET_URL) {
+      const me = participantId, base = $('review').textContent;
+      $('review').textContent = base + '   Saving online... keep this page open.';
+      sendChain.then(() => {
+        if (participantId !== me || idx < trials.length) return;   // they moved on to something else
+        $('review').textContent = base + (sendFailed
+          ? '   (Warning: some results could not be sent online. Tell the researcher. They are saved on this device.)'
+          : '   All results saved online.');
+      });
+    }
     return;
   }
   const p = trials[idx];
@@ -355,6 +382,14 @@ $('clearBtn').onclick = () => {
     localStorage.removeItem(STORE); localStorage.removeItem('vcm_count');
   }
 };
+
+// Resend any rows that failed to send earlier on this device
+(function () {
+  const q = JSON.parse(localStorage.getItem(PENDING) || '[]');
+  if (!q.length) return;
+  localStorage.removeItem(PENDING);
+  q.forEach(sendRow);
+})();
 
 // Start on the menu
 showScreen('menu');
