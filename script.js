@@ -107,7 +107,7 @@ const EXP = { viewByLevel: { Simple: 20, Medium: 20, Complex: 20 }, recall: 30, 
 const COUNTERBALANCE = false;
 // Researcher PIN: Export CSV and Delete experiment data ask for it. CHANGE IT to your own number.
 // (This stops volunteers clicking by accident. It is not real security: anyone can read this file.)
-const ADMIN_PIN = '0331';
+const ADMIN_PIN = '198003';
 const askPin = () => prompt('Researcher PIN:') === ADMIN_PIN || (alert('Wrong PIN.'), false);
 // ---- Online storage: every volunteer's results are sent to ONE Google Sheet ----
 // Paste your Apps Script web app URL below. Leave it '' to save on this device only.
