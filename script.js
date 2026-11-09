@@ -100,7 +100,7 @@ const DIFFICULTY = {                                       // used by game mode 
 const GAME_ROUNDS = 5;
 // Experiment timing. Keep all three viewing times EQUAL so complexity is the only thing that changes.
 // autoFinish: true = the experiment ends a pattern as soon as it is rebuilt perfectly
-const EXP = { viewByLevel: { Simple: 15, Medium: 15, Complex: 15 }, recall: 30, pause: 3, autoFinish: true, feedback: true };
+const EXP = { viewByLevel: { Simple: 20, Medium: 20, Complex: 20 }, recall: 30, pause: 3, autoFinish: true, feedback: true };
 // feedback: true = show accuracy and the real pattern after every pattern (press Next to continue)
 // true  = rotate the level order and shuffle patterns for each participant (counterbalancing)
 // false = EVERY participant gets the exact same patterns in the exact same order
@@ -237,7 +237,7 @@ document.querySelectorAll('.tool').forEach(btn => {
 // =====================================================
 function practiceRound(level) {
   runRound({
-    pattern: randomPattern(LEVELS[level]), view: 10, recall: 30,
+    pattern: randomPattern(LEVELS[level]), view: EXP.viewByLevel[level], recall: 30,
     feedback: true, autoFinish: true, label: 'Practice (' + level + ')',
     nextLabel: 'Another round', done: () => {}, next: () => practiceRound(level)
   });
