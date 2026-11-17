@@ -414,7 +414,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     document.querySelectorAll('.tool').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
   };
-};
+});
 
 // =====================================================
 // PART 5: PRACTICE MODE (nothing is saved)
